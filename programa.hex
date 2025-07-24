@@ -1,6 +1,12 @@
-00A00313 
-00602023 
-00002283 
-02800213 
-00622023
-FEDFF06F
+00002183   lw    x3, 0(x0)        # x3 = mem[0]  (N = número de iterações lido da RAM)
+00000093   addi  x1, x0, 0        # x1 = 0       (a = 0)
+00100113   addi  x2, x0, 1        # x2 = 1       (b = 1)
+00018C63   beq   x3, x0, +24      # se N == 0 -> salta 6 instruções à frente (vai para o 'done')
+00208333   add   x6, x1, x2       # x6 = x1 + x2 (f = a + b)
+00010093   addi  x1, x2, 0        # x1 = x2      (a = b)
+00030113   addi  x2, x6, 0        # x2 = x6      (b = f)
+FFF18193   addi  x3, x3, -1       # x3 = x3 - 1  (N--)
+FEDFF06F   jal   x0, -20          # volta para o beq em 0x000C (repete o laço)
+02800213   addi  x4, x0, 40       # x4 = 40      (endereço da mem[10], se a RAM é word-indexada)
+00122023   sw    x1, 0(x4)        # mem[40] = x1 (grava F(N) em mem[10])
+FD4FF06F   jal   x0, ???          # salto negativo: volta para o início (PC=0x0000), loop infinito do programa
