@@ -44,40 +44,31 @@ module MemoriaDeDados #(
             endcase
         end
     end
-    reg [31:0] word_read_from_mem;
-    reg [7:0]  byte_sel;
-    reg [15:0] half_sel;
-    // --- LÓGICA DE LEITURA COMBINACIONAL ---
-    // A leitura agora é imediata, sem esperar pelo clock
-    always @(*) begin
-        
-
+    // --- LÓGICA DE LEITURA SÍNCRONA ---
+    // A leitura agora é sincronizada com o clock
+    always @(posedge clk) begin
         // Valor padrão para evitar latches
-        read_data = 32'b0;
-
-        // Leitura da palavra inteira da memória
-        word_read_from_mem = mem[endereco[ADDR_WIDTH-1:2]];
+        read_data <= 32'b0;
 
         if (mem_read) begin
+            // Leitura da palavra inteira da memória
             case (load_size)
                 2'b00: begin // LB / LBU
                     case (endereco[1:0])
-                        2'b00:   byte_sel = word_read_from_mem[7:0];
-                        2'b01:   byte_sel = word_read_from_mem[15:8];
-                        2'b10:   byte_sel = word_read_from_mem[23:16];
-                        default: byte_sel = word_read_from_mem[31:24];
+                        2'b00:   read_data <= load_unsigned ? {24'b0, mem[endereco[ADDR_WIDTH-1:2]][7:0]} : {{24{mem[endereco[ADDR_WIDTH-1:2]][7]}}, mem[endereco[ADDR_WIDTH-1:2]][7:0]};
+                        2'b01:   read_data <= load_unsigned ? {24'b0, mem[endereco[ADDR_WIDTH-1:2]][15:8]} : {{24{mem[endereco[ADDR_WIDTH-1:2]][15]}}, mem[endereco[ADDR_WIDTH-1:2]][15:8]};
+                        2'b10:   read_data <= load_unsigned ? {24'b0, mem[endereco[ADDR_WIDTH-1:2]][23:16]} : {{24{mem[endereco[ADDR_WIDTH-1:2]][23]}}, mem[endereco[ADDR_WIDTH-1:2]][23:16]};
+                        default: read_data <= load_unsigned ? {24'b0, mem[endereco[ADDR_WIDTH-1:2]][31:24]} : {{24{mem[endereco[ADDR_WIDTH-1:2]][31]}}, mem[endereco[ADDR_WIDTH-1:2]][31:24]};
                     endcase
-                    read_data = load_unsigned ? {24'b0, byte_sel} : {{24{byte_sel[7]}}, byte_sel};
                 end
                 2'b01: begin // LH / LHU
                     case (endereco[1])
-                        1'b0:    half_sel = word_read_from_mem[15:0];
-                        default: half_sel = word_read_from_mem[31:16];
+                        1'b0:    read_data <= load_unsigned ? {16'b0, mem[endereco[ADDR_WIDTH-1:2]][15:0]} : {{16{mem[endereco[ADDR_WIDTH-1:2]][15]}}, mem[endereco[ADDR_WIDTH-1:2]][15:0]};
+                        default: read_data <= load_unsigned ? {16'b0, mem[endereco[ADDR_WIDTH-1:2]][31:16]} : {{16{mem[endereco[ADDR_WIDTH-1:2]][31]}}, mem[endereco[ADDR_WIDTH-1:2]][31:16]};
                     endcase
-                    read_data = load_unsigned ? {16'b0, half_sel} : {{16{half_sel[15]}}, half_sel};
                 end
                 default: begin // LW
-                    read_data = word_read_from_mem;
+                    read_data <= mem[endereco[ADDR_WIDTH-1:2]];
                 end
             endcase
         end
